@@ -1,18 +1,14 @@
 main{
-  int x;
-  array int[5] y;
-
-  scanf y[4];
-
-  x = 5;
-  if((x > 6)){
-  printf 6;
+  int y;
+  int p;
+  function int doble( int x , int z){
+    int w;
+    printf x;
+    w = x + z;
+    
+    return w;
   }
-  else{
-  printf x;
-  }
-  printf 0;
-  printf y[4];
-  printf y[5];
+  scanf y;
+  printf doble(y, 3);
 
 }

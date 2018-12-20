@@ -377,7 +377,7 @@ int buscarIdEnJerarquiaDesdeClase(tablaSimbolosClases *t, char * nombre_id, char
 **/
 int buscarTablaSimbolosAmbitosConPrefijos (tablaSimbolosAmbitos *tA, char *id, elementoTablaSimbolos **e, char *id_ambito){
 
-	if (!tA || !id || !e){
+	if (!tA || !id ){
 		return ERROR;
 	}
 
@@ -522,6 +522,7 @@ int buscarTablaSimbolosAmbitoActual(tablaSimbolosAmbitos * t, char* id, elemento
 		return ERROR;
 	}
 	if(t->idAmbito == GLOBAL){
+    printf("\nESTAMOS EN EL AMBITO GLOBAL\n");
 		//sprintf(aux, "% s_%s", t->nombre_global, id);
                 /*strcpy(aux, t->nombre_global);
                 strcpy(aux, "_");
@@ -530,13 +531,16 @@ int buscarTablaSimbolosAmbitoActual(tablaSimbolosAmbitos * t, char* id, elemento
 		if(n){
 
 			*e = nodo_get_ElementoTablaSimbolos(n);
+      printf("NOMBRE GLOBAL: %s\n", t->nombre_global);
 			strcpy(id_ambito, t->nombre_global);
 			return OK;
 		}
 		return ERROR;
 	} else if (t->idAmbito == LOCAL){
-                sprintf(aux, "%s_%s", t->nombre_local, id);
-		n = buscarNodoHash(t->local, aux);
+    printf("\nESTAMOS EN EL AMBITO LOCAL\n");
+      //sprintf(aux, "%s_%s", t->nombre_local, id);
+      printf("NOMBRE DE LA TABLA: %s\n", aux);
+		n = buscarNodoHash(t->local, id);
 		if(!n){
                     sprintf(aux, "%s_%s", t->nombre_global, id);
 			/*strcpy(aux, t->nombre_global);
@@ -552,6 +556,8 @@ int buscarTablaSimbolosAmbitoActual(tablaSimbolosAmbitos * t, char* id, elemento
 			return ERROR;
 		} else {
 			*e = nodo_get_ElementoTablaSimbolos(n);
+
+      printf("NOMBRE LOCAL: %s\n", t->nombre_local);
 			strcpy(id_ambito, t->nombre_local);
 			return OK;
 		}
@@ -718,7 +724,7 @@ int insertarTablaSimbolosAmbitos(tablaSimbolosAmbitos * tA, char* id_clase, elem
 		}
 	}
 	if (tA->idAmbito == LOCAL){
-		if (insertarNodoHash(tA->local, id_clase, e) == ERROR){
+    if (insertarNodoHash(tA->local, id_clase, e) == ERROR){
 			return ERROR;
 		}
 	}

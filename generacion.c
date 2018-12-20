@@ -449,9 +449,34 @@ void escribir_elemento_vector(FILE * fpasm,char * nombre_vector, int tam_max, in
   fprintf(fpasm,"\tlea eax, [edx + eax*4]\n");
   fprintf(fpasm,"\tpush dword eax\n");
 
+}
 
+void declararFuncion(FILE * fd_s, char * nombre_funcion, int num_var_loc){
+  fprintf(fd_s, "\n;---Funcion declarar_funcion---\n");
+  fprintf(fd_s,"_%s:\n", nombre_funcion);
+  fprintf(fd_s,"\tpush ebp\n");
+  fprintf(fd_s,"\tmov ebp ,esp\n");
+  fprintf(fd_s,"\tsub esp ,4 * %d\n", num_var_loc);
 
+}
+//PARA QUE SIRVE "es_variable"
+void retornarFuncion(FILE * fd_s, int es_variable){
+  fprintf(fd_s, "\n;---Funcion retornar_funcion---\n");
+  fprintf(fd_s,"\tpop dword eax\n");
+  if(es_variable == 1){
+    fprintf(fd_s,"\tmov eax, [eax]\n");
+  }
+  fprintf(fd_s,"\tmov esp ,ebp\n");
+  fprintf(fd_s,"\tpop dword ebp\n");
+  fprintf(fd_s,"\tret\n");
+}
 
+void escribirParametro(FILE* fpasm, int pos_parametro, int num_total_parametros){
+  fprintf(fpasm, "\tlea  eax, [ebp+4+( 4 * (%d) )]\n", num_total_parametros- pos_parametro);
+  fprintf(fpasm, "\tpush dword eax\n");
+}
 
-
+void escribirVariableLocal(FILE* fpasm, int posicion_variable_local){
+  fprintf(fpasm, "\tlea  eax, [ebp - 4 * %d ]\n",posicion_variable_local);
+  fprintf(fpasm, "\tpush dword eax\n");
 }

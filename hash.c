@@ -300,6 +300,7 @@ int insertarNodoHash(TablaHash *th, char *clave, elementoTablaSimbolos *info) {
 
     th->lista[th->nElem] = clave;
     th->nElem++;
+		printf("La clave del nodo insertado: %s\n",th->tabla[ind]->clave);
 
 		return OK;
 }

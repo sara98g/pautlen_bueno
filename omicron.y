@@ -19,10 +19,22 @@
   int clase_actual, tipo_actual, tamanio_vector_actual, tamanio_actual;
   int etiqueta_global = 0;
 
+  int pos_var_local_actual=1, num_params_actual, pos_params_actual, num_var_local,num_vars_boolean_actual;
+  int fn_return=0;
+  int en_exp_list = 0;
+
   char idAmbito[64];
   elementoTablaSimbolos * e = NULL;
 
+  typedef struct{
+    char nombre[MAX_ID+1];
+    int tipo;
+    int clase;
+    int es_variable;
+    int posicion;
+  }parametros;
 
+  parametros array_param[64];
 
 %}
 
@@ -48,6 +60,14 @@
   %type <atributos> if_exp
   %type <atributos> if_exp_sentencias
   %type <atributos> bucle
+  %type <atributos> idf_llamada
+  %type <atributos> tipo
+  %type <atributos> fn_declaration
+  %type <atributos> fn_complete_name
+  %type <atributos> fn_name
+  %type <atributos> tipo_retorno
+  %type <atributos> parametro_funcion
+  %type <atributos> idpf
 
 
   %token TOK_NONE
@@ -183,8 +203,8 @@ modificadores_clase: /*vacio*/ {
 clase_escalar: tipo {fprintf(salida,";R:\tclase_escalar: tipo\n"); clase_actual= ESCALAR;}
         ;
 
-tipo: TOK_INT {fprintf(salida,";R:\ttipo: TOK_INT\n"); tipo_actual =ENTERO;}
-        | TOK_BOOLEAN {fprintf(salida,";R:\ttipo: TOK_BOOLEAN\n"); tipo_actual = BOOLEANO;} /*REVISAR NO SE QUE VALOR ES BOOLEAN*/
+tipo: TOK_INT {fprintf(salida,";R:\ttipo: TOK_INT\n"); tipo_actual =ENTERO;$$.tipo=tipo_actual;}
+        | TOK_BOOLEAN {fprintf(salida,";R:\ttipo: TOK_BOOLEAN\n"); tipo_actual = BOOLEANO; $$.tipo=tipo_actual;} /*REVISAR NO SE QUE VALOR ES BOOLEAN*/
         ;
 
 clase_objeto: '{' TOK_IDENTIFICADOR '}' {fprintf(salida,";R:\tclase_objeto: '{' TOK_IDENTIFICADOR '}'\n");}
@@ -213,30 +233,204 @@ funciones: funcion funciones {fprintf(salida,";R:\tfunciones: funcion funciones\
         | /*vacio*/  {fprintf(salida,";R:\tfunciones:\n");}
         ;
 /*CAMBIARLO A " fn_declaration sentencias '}' "*/
-funcion: TOK_FUNCTION modificadores_acceso tipo_retorno TOK_IDENTIFICADOR '(' parametros_funcion ')' '{' declaraciones_funcion sentencias'}'{
-        fprintf(salida,";R:\tfuncion: TOK_FUNCTION modificadores_acceso tipo_retorno TOK_IDENTIFICADOR '(' parametro_funcion ')' declaraciones_funcion sentencia\n");}
+funcion: fn_declaration sentencias'}'{
+        fprintf(salida,";R:\tfuncion: TOK_FUNCTION modificadores_acceso tipo_retorno TOK_IDENTIFICADOR '(' parametro_funcion ')' declaraciones_funcion sentencia\n");
+        if(fn_return < 1){
+          printf("ERROR SEMANTICO: %d:%d - devuelve fn_return < 1: %d\n",line, columna-yyleng, fn_return);
+          fn_return = 0;
+          //exit(-1);
+
+        }
+        cerrarAmbitoMain(tsa);
+
+      }
 
         ;
 
+fn_declaration: fn_complete_name '{' declaraciones_funcion {
+        declararFuncion(salida, $1.lexema, num_var_local );
+        printf("Llegamos  a declarar el inicio de la fucnion!\n");
+        //acceder a la funcion global -> rellenar el numero de variables locales
+
+};
+
+fn_complete_name: fn_name '(' parametros_funcion ')'{
+
+        char nombre[64];
+        sprintf(nombre, "main_%s",$1.lexema);
+        int i;
+        for(i = 0; i < num_params_actual; i++){
+          if(array_param[i].tipo == ENTERO)
+            strcat(nombre, "@1");
+          else
+            strcat(nombre, "@3");
+        }
+
+        if(buscarParaDeclararIdTablaSimbolosAmbitos(tsa, nombre, &e, idAmbito)==ERROR){
+
+           elementoTablaSimbolos *elemento = nodo_crearElementoTablaSimbolos();
+
+          if(abrirAmbitoMain(tsa, nombre, FUNCION, $1.tipo) == ERROR){
+
+            printf("Error abrir ambito local\n");
+            exit(-1);
+          }
+
+          buscarIdNoCualificado(NULL, tsa, nombre ,"main", &e, idAmbito  );
+          e->numero_parametros;
+          //nodo_free_ElementoTablaSimbolos(elemento);
+          elemento = nodo_crearElementoTablaSimbolos();
+          printf("Numero de parametros :  %d\n" , num_params_actual);
+          for(i = 0; i < num_params_actual; i++){
+            printf("El parametro[%d]: %s\n", i, array_param[i].nombre);
+            if(buscarParaDeclararIdTablaSimbolosAmbitos(tsa, array_param[i].nombre, &e, idAmbito)==ERROR){
+              if(array_param[i].tipo == BOOLEANO || array_param[i].tipo ==ENTERO){
+                elemento = nodo_set_ElementoTablaSimbolos(elemento,
+                                          array_param[i].nombre,
+                                          array_param[i].clase,
+                                          PARAMETRO,
+                                          array_param[i].tipo,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          array_param[i].posicion,
+                                          0,
+                                          1,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          NULL);
+
+                if(insertarTablaSimbolosAmbitos(tsa, array_param[i].nombre,  elemento) == ERROR){
+                  printf("error al insertar\n");
+                  printf("ERROR SEMANTICO: %d:%d - parametro %s duplicado\n",line, columna-yyleng, array_param[i].nombre);
+                  nodo_free_ElementoTablaSimbolos(elemento);
+                  exit(-1);
+                }
+                printf("Parametro insertado: %s, %d\n", elemento->clave, elemento->categoria );
+
+            }
+            else{
+              printf("parametro ya declarado %s\n",array_param[i].nombre);
+              exit(-1);
+            }
+        }
+        else{
+          printf("ERROR SEMANTICO: %d:%d - funcion %s duplicado\n",line, columna-yyleng, $1.lexema);
+          exit(-1);
+        }
+
+    }
+    nodo_free_ElementoTablaSimbolos(elemento);
+    strcpy($$.lexema, $1.lexema);
+    $$.tipo=$1.tipo;
+
+    num_params_actual = 0;
+    pos_params_actual = 0;
+  }
+};
+
+fn_name: TOK_FUNCTION modificadores_acceso tipo_retorno TOK_IDENTIFICADOR{
+
+        num_vars_boolean_actual = 0;
+        pos_var_local_actual = 1;
+        num_params_actual = 0;
+        pos_params_actual = 0;
+        strcpy($$.lexema, $4.lexema);
+        $$.tipo= $3.tipo;
+
+};
+
 
 tipo_retorno: TOK_NONE {fprintf(salida,";R:\ttipo_retorno: TOK_NONE\n");}
-        | tipo {fprintf(salida,";R:\tipo_retorno: tipo\n");}
-        | clase_objeto {fprintf(salida,";R:\tipo_retorno: clase_objeto\n");}
+        | tipo {fprintf(salida,";R:\ttipo_retorno: tipo\n");}
+        | clase_objeto {fprintf(salida,";R:\ttipo_retorno: clase_objeto\n");}
         ;
 
 parametros_funcion: parametro_funcion resto_parametros_funcion {fprintf(salida,";R:\tparametros_funcion: parametro_funcion resto_parametros_funcion\n");}
         | /*vacio*/ {fprintf(salida,";R:\tparametros_funcion:\n");}
         ;
 
-resto_parametros_funcion: ';' parametro_funcion resto_parametros_funcion {fprintf(salida,";R:\tresto_parametros_funcion: ; parametro_funcion resto_parametros_funcion\n");}
+resto_parametros_funcion: ',' parametro_funcion resto_parametros_funcion {fprintf(salida,";R:\tresto_parametros_funcion: ; parametro_funcion resto_parametros_funcion\n");}
         | /*vacio*/ {fprintf(salida,";R:\tresto_parametros_funcion:\n");}
         ;
 
-parametro_funcion: tipo TOK_IDENTIFICADOR {fprintf(salida,";R:\tparametro_funcion: tipo identificador\n");}
+parametro_funcion: tipo idpf {
+          fprintf(salida,";R:\tparametro_funcion: tipo identificador\n");
+          strcpy(array_param[pos_params_actual].nombre, $2.lexema);
+          array_param[pos_params_actual].tipo = tipo_actual;
+          array_param[pos_params_actual].clase = clase_actual;
+          pos_params_actual++;
+          num_params_actual++;
+
+      }
         | clase_objeto TOK_IDENTIFICADOR {fprintf(salida,";R:\tparametro_funcion: clase_objeto identificador\n");}
         ;
 
-declaraciones_funcion: declaraciones {fprintf(salida,";R:\tdeclaraciones_funcion: declaraciones_funcion\n");}
+idpf: TOK_IDENTIFICADOR {
+    strcpy($$.lexema, $1.lexema);
+
+    if(buscarParaDeclararIdTablaSimbolosAmbitos(tsa, $1.lexema, &e, idAmbito)==ERROR){
+        elementoTablaSimbolos *elemento = nodo_crearElementoTablaSimbolos();
+        elemento = nodo_set_ElementoTablaSimbolos(elemento,
+                                  $1.lexema,
+                                  clase_actual,
+                                  PARAMETRO,
+                                  $1.tipo,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  pos_params_actual,
+                                  0,
+                                  1,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  NULL);
+        if(insertarTablaSimbolosAmbitos(tsa, $1.lexema,  elemento) == ERROR){
+          printf("ERROR SEMANTICO: %d:%d - Identificador %s duplicado\n",line, columna-yyleng, $1.lexema);
+          nodo_free_ElementoTablaSimbolos(elemento);
+          exit(-1);
+        }
+
+    }
+    else{
+      printf("ERROR SEMANTICO: %d:%d - Identificador %s duplicado\n",line, columna-yyleng, $1.lexema);
+      exit(-1);
+    }
+
+
+};
+
+declaraciones_funcion: declaraciones {fprintf(salida,";R:\tdeclaraciones_funcion: declaracion\n");}
         | /*vacio*/ {fprintf(salida,";R:\tdeclaraciones_funcion:\n");}
         ;
 
@@ -268,15 +462,42 @@ bloque: condicional {
 
 asignacion: TOK_IDENTIFICADOR '=' exp {
                 fprintf(salida,";R:\tasignacion: TOK_IDENTIFICADOR '=' exp\n");
+                fprintf(salida,";R:\tLEXEMA1 : %s, LEXEMA2: %s\n", $1.lexema, $3.lexema);
                 e = NULL;
                 idAmbito[0] = '\0';
+                /*Revisar*/
                 if(buscarIdNoCualificado(NULL, tsa, $1.lexema, "main", &e, idAmbito) == ERROR){
                   printf("ERROR SEMANTICO: %d:%d No existe identificador %s\n", line, columna - yyleng, $1.lexema);
                   exit(-1);
                 }
 
                 if (e->tipo == $3.tipo){
-                  asignar(salida, $1.lexema, $3.es_direccion);
+                  printf("EL ID AMBITO EN ASIGNACION: %s\n", idAmbito);
+                  if(strcmp(idAmbito, "main") != 0){
+                      printf("Entramos en asignacion LOCAL\n");
+
+                        if(e->categoria == PARAMETRO){
+                          printf("COGEMOS EL PARAMETRO: %s\n", $3.lexema);
+                          fprintf(salida, "\tlea  eax, [ebp+4+( 4 * (%d) )]\n", num_params_actual - e->posicion_parametro);
+                          fprintf(salida, "\tpush dword eax\n");
+
+                        } else if( e->categoria == VARIABLE){
+                          fprintf(salida, "\tlea  eax, [ebp - 4 * %d ]\n",e->posicion_variable_local);
+                          fprintf(salida, "\tpush dword eax\n");
+                        }
+
+
+                        fprintf(salida, "\tpop dword eax\n");
+                        fprintf(salida, "\tpop dword ebx\n");
+
+                        if( $3.es_direccion == 1){
+                          fprintf(salida, "\tmov ebx, [ebx]\n");
+                        }
+                        fprintf(salida, "\tmov [eax], ebx\n");
+
+                  }else{
+                      asignar(salida, $1.lexema, $3.es_direccion);
+                  }
 
 
                 }else{
@@ -429,7 +650,11 @@ escritura: TOK_PRINTF exp  {
         }
         ;
 
-retorno_funcion: TOK_RETURN exp {fprintf(salida,";R:\tretorno_funcion: TOK_RETURN exp\n");}
+retorno_funcion: TOK_RETURN exp {
+                fprintf(salida,";R:\tretorno_funcion: TOK_RETURN exp\n");
+                retornarFuncion(salida,$2.es_direccion); /*Revisar*/
+                fn_return++;
+              }
         | TOK_RETURN TOK_NONE {fprintf(salida,";R:\tretorno_funcion: TOK_RETURN TOK_NONE\n");}
         ;
 exp:    exp '+' exp {
@@ -531,12 +756,43 @@ exp:    exp '+' exp {
               }
         | TOK_IDENTIFICADOR/* cambiar "identificador" por "idf_llamada_funcion"*/ {
           fprintf(salida,";R:\texp: TOK_IDENTIFICADOR\n");
+          fprintf(salida, ";Identificaodr: %s\n", $1.lexema);
           if(buscarIdNoCualificado(NULL, tsa, $1.lexema, "main", &e, idAmbito) == OK){
-              escribir_operando(salida, $1.lexema, 1);
+
+                if(strcmp(idAmbito,"main")==0){
+                  if(en_exp_list == 1){
+                    fprintf(salida, "\tpush dword [_%s]\n", $1.lexema);
+                  }
+                  else{
+                    escribir_operando(salida, $1.lexema, 1);
+                  }
+
+
+                }
+                else{
+                  num_var_local++;
+                  if(e->categoria == PARAMETRO){
+                    fprintf(salida, ";exp2 es param: %s\n", e->clave);
+
+                    fprintf(salida, "\tlea  eax, [ebp+4+( 4 * %d )]\n", num_params_actual+1 - e->posicion_parametro);
+
+                    fprintf(salida, "\tpush dword eax\n");
+
+                  } else if( e->categoria == VARIABLE){
+                    fprintf(salida, ";exp2 es var_local: %s\n", e->clave);
+                    fprintf(salida, "\tlea  eax, [ebp - 4 * %d ]\n",e->posicion_variable_local);
+
+                    fprintf(salida, "\tpush dword eax\n");
+
+                  }
+
+              }
+
+
               $$.tipo = e->tipo;
               $$.es_direccion = 1;
               strcpy($$.lexema, $1.lexema);
-              nodo_free_ElementoTablaSimbolos(e);
+              //nodo_free_ElementoTablaSimbolos(e);
 
           }
           else{
@@ -549,6 +805,7 @@ exp:    exp '+' exp {
 
                 $$.tipo = $1.tipo;
                 $$.es_direccion = $1.es_direccion;
+                $$.valor_entero = $1.valor_entero;
         }
         | '(' exp ')'  {
           fprintf(salida,";R:\texp:'(' exp ')' \n");
@@ -558,24 +815,107 @@ exp:    exp '+' exp {
             fprintf(salida,";R:\texp:'(' comparacion ')' \n");
             $$.tipo = $2.tipo;
             $$.es_direccion = $2.es_direccion;
+            strcpy($$.lexema, $2.lexema);
           }
         | elemento_vector  {fprintf(salida,";R:\texp: elemento_vector");}
-        | TOK_IDENTIFICADOR '(' lista_expresiones ')' {fprintf(salida,";R:\texp: TOK_IDENTIFICADOR '(' lista_expresiones ')' \n");}
+        | idf_llamada '(' lista_expresiones ')' {
+          //numero parametros formales = actuales??s
+            char nombre[64];
+
+            sprintf(nombre, "main_%s",$1.lexema);
+            int i;
+            for(i = 0; i < num_params_actual; i++){
+              if(array_param[i].tipo == ENTERO)
+                strcat(nombre, "@1");
+              else
+                strcat(nombre, "@3");
+            }
+
+            if(buscarParaDeclararIdTablaSimbolosAmbitos(tsa, nombre, &e, idAmbito)==ERROR)
+            {
+              printf("La funcion a la que quieres acceder no esta declarada: %s\n", nombre);
+              exit(-1);
+            }
+
+            if(e->categoria != FUNCION){
+              printf("Llamando a la funcion la busqueda a devuelto un elemento que no es una funcion: %s\n", $1.lexema );
+            }
+            fprintf(salida,";R:\texp: idpf '(' lista_expresiones ')' \n");
+            // for( i = 0 ; i< num_params_actual ; i++){
+            //   printf("ESTE ES EL NOMBRE DEL PARAMETRO: %s\n",array_param[i].nombre);
+            //   if(array_param[i].es_variable == 1){
+            //     fprintf(salida, "\tmov eax,[_%s]\n", array_param[i].nombre);
+            //   }else{
+            //     fprintf(salida, "\tmov eax, _%s\n", array_param[i].nombre);
+            //   }
+            //   fprintf(salida, "\tpush dword eax\n");
+            // }
+            fprintf(salida, "\tcall _%s\n", $1.lexema);
+            fprintf(salida, "\tadd esp, 4 * %d\n", num_params_actual);
+            fprintf(salida, "\tpush dword eax\n");
+
+
+            en_exp_list = 0;
+
+            $$.tipo = e->tipo;
+            $$.es_direccion = 0;
+
+          }
         | identificador_clase TOK_IDENTIFICADOR '(' lista_expresiones ')' {fprintf(salida,";R:\texp: identificador_clase TOK_IDENTIFICADOR '(' lista_expresiones ')' \n");}
         | identificador_clase TOK_IDENTIFICADOR  {fprintf(salida,";R:\texp: identificador_clase TOK_IDENTIFICADOR \n");}
         ;
 
+idf_llamada: TOK_IDENTIFICADOR{
+
+         // if(buscarIdNoCualificado(NULL,tsa, $1.lexema,"main", &e, idAmbito)==ERROR){
+         //   printf("Esa funcion no existe %s\n", $1.lexema);
+         //   exit(-1);
+         // }
+         //
+         // if(e->categoria != FUNCION){
+         //   printf("Existe pero no es funcion %s\n", $1.lexema);
+         // }
+         if(en_exp_list == 1){
+           printf("ERROR idf_llamada\n");
+           exit(-1);
+         }
+         strcpy($$.lexema ,$1.lexema);
+         num_params_actual = 0;
+         en_exp_list = 1;
+         $$.tipo = e->tipo;
+         $$.es_direccion=0;
+
+}
+;
 
 
 identificador_clase: TOK_IDENTIFICADOR {fprintf(salida,";R:\tidentificador_clase: TOK_IDENTIFICADOR \n");}
         | TOK_ITSELF {fprintf(salida,";R:\tidentificador_clase: TOK_ITSELF \n");}
         ;
 
-lista_expresiones: exp resto_lista_expresiones  {fprintf(salida,";R:\tlista_expresiones: exp resto_lista_expresiones\n");}
+lista_expresiones: exp resto_lista_expresiones  {
+          fprintf(salida,";R:\tlista_expresiones: exp resto_lista_expresiones\n");
+          // fprintf(salida, "\tpush dword %d\n", $1.valor_entero);
+          array_param[pos_params_actual].tipo = $1.tipo;
+          strcpy(array_param[pos_params_actual].nombre, $1.lexema);
+          array_param[pos_params_actual].es_variable = $1.es_direccion;
+          array_param[pos_params_actual].posicion = pos_params_actual;
+          num_params_actual++;
+          pos_params_actual++;
+
+        }
         | /*vacio*/ {fprintf(salida,";R:\tlista_expresiones:\n");}
         ;
 
-resto_lista_expresiones: ',' exp resto_lista_expresiones {fprintf(salida,";R:\tlista_expresiones: ',' exp resto_lista_expresiones\n");}
+
+resto_lista_expresiones: ',' exp resto_lista_expresiones {
+          fprintf(salida,";R:\tlista_expresiones: ',' exp resto_lista_expresiones\n");
+          fprintf(salida, "\tpush dword %s\n", $2.lexema);
+          array_param[pos_params_actual].tipo = $2.tipo;
+          strcpy(array_param[pos_params_actual].nombre, $2.lexema);
+          num_params_actual++;
+          pos_params_actual++;
+        }
         | /*vacio*/{fprintf(salida,";R:\tresto_lista_expresiones:\n");}
         ;
 
@@ -668,10 +1008,12 @@ comparacion: exp TOK_IGUAL exp {
 constante: constante_logica {fprintf(salida,";R:\tconstante: constante_logica\n");
                 $$.tipo = $1.tipo;
                 $$.es_direccion = $1.es_direccion;
+                $$.valor_entero = $1.valor_entero;
         }
         | constante_entera  {fprintf(salida,";R:\tconstante: constante_entera\n");
                 $$.tipo = $1.tipo;
                 $$.es_direccion = $1.es_direccion;
+                $$.valor_entero = $1.valor_entero;
         }
         ;
 constante_logica: TOK_TRUE {fprintf(salida,";R:\tconstante_logica: TOK_TRUE\n");
@@ -706,7 +1048,7 @@ identificador: TOK_IDENTIFICADOR
         {
                 fprintf(salida, ";R:\tidentificador: TOK_IDENTIFICADOR");
                 $1.tipo=tipo_actual;
-
+                printf("\n\nIDENTIFICADOR: %s\n\n", $1.lexema);
                 if(clase_actual == VECTOR){
                   tamanio_actual=tamanio_vector_actual;
                 }
@@ -725,7 +1067,7 @@ identificador: TOK_IDENTIFICADOR
                 													0,
                 													0,
                 													0,
-                													0,
+                													pos_var_local_actual,
                 													0,
                 													0,
                 													tamanio_actual,
@@ -763,7 +1105,10 @@ identificador: TOK_IDENTIFICADOR
                   printf("ERROR SEMANTICO: %d:%d - Identificador %s duplicado\n",line, columna-yyleng, $1.lexema);
                   exit(-1);
                 }
-
+                if(tsa->idAmbito == LOCAL){
+                  num_var_local++;
+                  pos_var_local_actual++;
+                }
               nodo_free_ElementoTablaSimbolos(elemento);
 
         }
