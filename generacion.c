@@ -387,71 +387,197 @@ void escribir(FILE* fpasm, int es_variable, int tipo){
 	fprintf(fpasm, "\tcall print_endofline\n");
 }
 
-void ifthen_inicio(FILE * fpasm, int exp_es_variable, int etiqueta){
-  fprintf(fpasm, "\n;---Funcion ifthen_inicio---\n");
-  fprintf(fpasm,"\tpop eax\n");
-  if(exp_es_variable)
-    fprintf(fpasm,"\tmov eax , [eax]\n");
-  fprintf(fpasm,"\tcmp eax, 0\n");
-  fprintf(fpasm,"\tje near fin_si%d\n",etiqueta );
+void ifthenelse_inicio(FILE* fd_asm, int exp_es_variable, int etiqueta){
+    if(!fd_asm)
+        return;
 
+    if(!fd_asm)
+        return;
+
+    if_exp_pila (fd_asm, exp_es_variable, etiqueta);
+
+    return;
 }
 
-void ifthen_fin(FILE* fpasm,int etiqueta){
-  fprintf(fpasm, "\n;---Funcion ifthen_fin---\n");
-  fprintf(fpasm,"fin_si%d:\n", etiqueta);
+void ifthen_inicio(FILE* fd_asm, int exp_es_variable, int etiqueta){
+    if(!fd_asm)
+        return;
+
+    if_exp_pila (fd_asm, exp_es_variable, etiqueta);
+
+    return;
+}
+
+void if_exp_pila (FILE* fd_asm, int exp_es_variable, int etiqueta){
+    if(!fd_asm)
+        return;
+
+    fprintf(fd_asm, "\n; ---Funcion ifthen_inicio---\n");
+    fprintf(fd_asm, "\tpop eax\n");
+
+    if(exp_es_variable)
+        fprintf(fd_asm, "\tmov eax , [eax]\n");
+
+    fprintf(fd_asm, "\tcmp eax, 0\n");
+    fprintf(fd_asm, "\tje near fin_si%d\n",etiqueta );
+
+    return;
+}
+
+void ifthen_fin(FILE* fd_asm,int etiqueta){
+    if(!fd_asm)
+        return;
+
+    fprintf(fd_asm, "\n; ---Funcion ifthen_fin---\n");
+    fprintf(fd_asm, "fin_si%d:\n", etiqueta);
+
+    return;
 }
 
 
-void ifthenelse_fin_then( FILE * fpasm, int etiqueta){
-  fprintf(fpasm, "\n;---Funcion ifthenelse_fin_then---\n");
-  fprintf(fpasm,"jmp near fin_sino%d\n", etiqueta);
-  ifthen_fin(fpasm, etiqueta);
+void ifthenelse_fin_then( FILE* fd_asm, int etiqueta){
+    if(!fd_asm)
+        return;
 
+    fprintf(fd_asm, "\n; ---Funcion ifthenelse_fin_then---\n");
+    fprintf(fd_asm, "\tjmp near fin_sino%d\n", etiqueta);
+    ifthen_fin(fd_asm, etiqueta);
+
+    return;
 }
 
-void ifthenelse_fin( FILE * fpasm, int etiqueta){
-  fprintf(fpasm, "\n;---Funcion ifthenelse_fin---\n");
-  fprintf(fpasm,"fin_sino%d:\n", etiqueta);
+void ifthenelse_fin( FILE* fd_asm, int etiqueta){
+    if(!fd_asm)
+        return;
+
+    fprintf(fd_asm, "\n; ---Funcion ifthenelse_fin---\n");
+    fprintf(fd_asm, "fin_sino%d:\n", etiqueta);
+    return;
 }
 
-void while_inicio(FILE * fpasm, int etiqueta){
-  fprintf(fpasm,"\n;---Funcion while_inicio---\n");
-  fprintf(fpasm,"inicio_while%d:\n", etiqueta);
+void while_inicio(FILE* fd_asm, int etiqueta){
+    if(!fd_asm)
+        return;
+
+    fprintf(fd_asm, "\n; ---Funcion while_inicio---\n");
+    fprintf(fd_asm, "inicio_while%d:\n", etiqueta);
+    return;
 }
 
-void while_exp_pila (FILE * fpasm, int exp_es_variable, int etiqueta){
-  fprintf(fpasm, "\n;---Funcion while_exp_pila---\n");
-  fprintf(fpasm,"\tpop eax\n");
-  if(exp_es_variable)
-    fprintf(fpasm,"\tmov eax , [eax]\n");
-  fprintf(fpasm,"\tcmp eax, 0\n");
-  fprintf(fpasm,"\tje near fin_while%d\n",etiqueta );
+void while_exp_pila (FILE* fd_asm, int exp_es_variable, int etiqueta){
+    if(!fd_asm)
+        return;
 
+    fprintf(fd_asm, "\n; ---Funcion while_exp_pila---\n");
+    fprintf(fd_asm, "\tpop eax\n");
+
+    if(exp_es_variable)
+        fprintf(fd_asm, "\tmov eax , [eax]\n");
+
+    fprintf(fd_asm, "\tcmp eax, 0\n");
+    fprintf(fd_asm, "\tje near fin_while%d\n",etiqueta );
+
+    return;
 }
 
-void while_fin( FILE * fpasm, int etiqueta){
-  fprintf(fpasm, "\n;---Funcion while_fin---\n");
-  fprintf(fpasm,"jmp near inicio_while%d\n", etiqueta);
-  fprintf(fpasm,"fin_while%d:\n", etiqueta);
+void while_fin(FILE* fd_asm, int etiqueta){
+    if(!fd_asm)
+        return;
+
+    fprintf(fd_asm, "\n; ---Funcion while_fin---\n");
+    fprintf(fd_asm, "\tjmp near inicio_while%d\n", etiqueta);
+    fprintf(fd_asm, "fin_while%d:\n", etiqueta);
+
+    return;
 }
 
-void escribir_elemento_vector(FILE * fpasm,char * nombre_vector, int tam_max, int exp_es_direccion){
-  fprintf(fpasm,"\tpop dword eax\n");
-  if(exp_es_direccion == 1)
-    fprintf(fpasm,"\tmov dword eax, [eax]\n");
-  fprintf(fpasm,"\tcmp eax,0\n");
-  fprintf(fpasm,"\tjl near mensaje_1\n");
+void operandoEnPilaAArgumento(FILE* fd_asm, int es_variable){
+    if(!fd_asm)
+        return;
 
-  fprintf(fpasm,"\tcmp eax, %d\n", tam_max-1);
-  fprintf(fpasm,"\tjg near mensaje_1\n");
-  fprintf(fpasm,"\tmov dword edx, _%s\n", nombre_vector);
-  fprintf(fpasm,"\tlea eax, [edx + eax*4]\n");
-  fprintf(fpasm,"\tpush dword eax\n");
+    return;
+}
 
+void escribir_elemento_vector(FILE* fd_asm,char* nombre_vector, int tam_max, int exp_es_direccion){
+    if(!fd_asm || !nombre_vector)
+        return;
 
+    fprintf(fd_asm, "\n; ---Funcion escribir_elemento_vector---\n");
+    fprintf(fd_asm,"\tpop dword eax\n");
+    if(exp_es_direccion == 1)
+        fprintf(fd_asm,"\tmov dword eax, [eax]\n");
+    fprintf(fd_asm,"\tcmp eax,0\n");
+    fprintf(fd_asm,"\tjl near mensaje_1\n");
 
+    fprintf(fd_asm,"\tcmp eax, %d\n", tam_max-1);
+    fprintf(fd_asm,"\tjg near mensaje_1\n");
+    fprintf(fd_asm,"\tmov dword edx, _%s\n", nombre_vector);
+    fprintf(fd_asm,"\tlea eax, [edx + eax*4]\n");
+    fprintf(fd_asm,"\tpush dword eax\n");
 
+    return;
+}
 
+void declararFuncion(FILE* fd_asm, char* nombre_funcion, int num_var_loc){
+    if(!fd_asm || !nombre_funcion)
+        return;
 
+    fprintf(fd_asm, "\n; ---Funcion declararFuncion---\n");
+    fprintf(fd_asm, "_%s:\n", nombre_funcion);
+    fprintf(fd_asm, "\tpush ebp\n");
+    fprintf(fd_asm, "\tmov ebp ,esp\n");
+    fprintf(fd_asm, "\tsub esp ,4 * %d\n", num_var_loc);
+
+    return;
+}
+
+void retornarFuncion(FILE* fd_asm, int es_variable){
+    if(!fd_asm)
+        return;
+
+    fprintf(fd_asm, "\n; ---Funcion retornarFuncion---\n");
+    fprintf(fd_asm, "\tpop dword eax\n");
+
+    if(es_variable == 1)
+        fprintf(fd_asm,"\tmov eax, [eax]\n");
+
+    fprintf(fd_asm, "\tmov esp ,ebp\n");
+    fprintf(fd_asm, "\tpop dword ebp\n");
+    fprintf(fd_asm, "\tret\n");
+
+    return;
+}
+
+void escribirParametro(FILE* fd_asm, int pos_parametro, int num_total_parametros){
+    if(!fd_asm)
+        return;
+
+    fprintf(fd_asm, "\n; ---Funcion escribirParametro---\n");
+    fprintf(fd_asm, "\tlea  eax, [ebp+4+( 4 * (%d) )]\n", num_total_parametros- pos_parametro);
+    fprintf(fd_asm, "\tpush dword eax\n");
+
+    return;
+}
+
+void escribirVariableLocal(FILE* fd_asm, int posicion_variable_local){
+    if(!fd_asm)
+        return;
+
+    fprintf(fd_asm, "\n; ---Funcion escribirVariableLocal---\n");
+    fprintf(fd_asm, "\tlea  eax, [ebp - 4 * %d ]\n",posicion_variable_local);
+    fprintf(fd_asm, "\tpush dword eax\n");
+
+    return;
+}
+
+void llamarFuncion(FILE* fd_asm, char* nombre_funcion, int num_argumentos){
+    if(!fd_asm || !nombre_funcion)
+	    return;
+
+    fprintf(fd_asm, "\n; ---Funcion llamarFuncion---\n");
+	fprintf(fd_asm, "\tcall %s\n", nombre_funcion);
+	fprintf(fd_asm, "\tadd esp, 4 * %d\n", num_argumentos);
+	fprintf(fd_asm, "\tpush dword eax\n");
+
+    return;
 }

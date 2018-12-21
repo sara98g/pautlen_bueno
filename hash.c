@@ -266,13 +266,12 @@ void destruirNodoHash(NodoHash *nh){
 }
 
 int insertarNodoHash(TablaHash *th, char *clave, elementoTablaSimbolos *info) {
-	int ind, i;
+	int ind;
     NodoHash *n = NULL;
     NodoHash *n2 = NULL;
 
     if (th->nElem > 0) {
-			printf("\nVAMOS A VER QUE ELEMENTOS HAY EN LA TABLA:\n");
-			
+
         if(buscarNodoHash(th, clave)){
     	printf("\tEl nodo con clave = %s ya existe... ", clave);
             return ERROR;
@@ -280,7 +279,6 @@ int insertarNodoHash(TablaHash *th, char *clave, elementoTablaSimbolos *info) {
     }
 
     ind = funcionHash(clave) % th->tam;
-	//printf("\t\tInsertar en la posicion: %d\n", ind);
 	if (!(n = crearNodoHash(clave, info))) {
         return ERROR;
     }
@@ -300,7 +298,7 @@ int insertarNodoHash(TablaHash *th, char *clave, elementoTablaSimbolos *info) {
 			th->tabla[ind] =nodoHash_copiar(n);
     }
 
-    th->lista[th->nElem] = clave;
+    strcpy(th->lista[th->nElem], clave);
     th->nElem++;
 
 		return OK;

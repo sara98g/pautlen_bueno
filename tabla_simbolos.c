@@ -377,7 +377,7 @@ int buscarIdEnJerarquiaDesdeClase(tablaSimbolosClases *t, char * nombre_id, char
 **/
 int buscarTablaSimbolosAmbitosConPrefijos (tablaSimbolosAmbitos *tA, char *id, elementoTablaSimbolos **e, char *id_ambito){
 
-	if (!tA || !id || !e){
+	if (!tA || !id ){
 		return ERROR;
 	}
 
@@ -391,7 +391,7 @@ int buscarTablaSimbolosAmbitosConPrefijos (tablaSimbolosAmbitos *tA, char *id, e
 *
 **/
 int buscarIdNoCualificado(tablaSimbolosClases *t, tablaSimbolosAmbitos *tabla_main, char * nombre_id, char * nombre_clase_desde, elementoTablaSimbolos ** e, char * nombre_ambito_encontrado){
-  if (/*!t || */!tabla_main || !nombre_id || !nombre_clase_desde ){
+  if (tabla_main || !nombre_id || !nombre_clase_desde ){
   	return ERROR;
   }
   if (strcmp(nombre_clase_desde, "main") == 0){
@@ -400,6 +400,7 @@ int buscarIdNoCualificado(tablaSimbolosClases *t, tablaSimbolosAmbitos *tabla_ma
   	}
 	return OK;
   } else {
+    
   	if(buscarIdEnJerarquiaDesdeClase(t, nombre_id, nombre_clase_desde, e, nombre_ambito_encontrado) == OK){
   		return OK;
   	}
@@ -535,8 +536,8 @@ int buscarTablaSimbolosAmbitoActual(tablaSimbolosAmbitos * t, char* id, elemento
 		}
 		return ERROR;
 	} else if (t->idAmbito == LOCAL){
-                sprintf(aux, "%s_%s", t->nombre_local, id);
-		n = buscarNodoHash(t->local, aux);
+      //sprintf(aux, "%s_%s", t->nombre_local, id);
+		n = buscarNodoHash(t->local, id);
 		if(!n){
                     sprintf(aux, "%s_%s", t->nombre_global, id);
 			/*strcpy(aux, t->nombre_global);
@@ -552,6 +553,7 @@ int buscarTablaSimbolosAmbitoActual(tablaSimbolosAmbitos * t, char* id, elemento
 			return ERROR;
 		} else {
 			*e = nodo_get_ElementoTablaSimbolos(n);
+
 			strcpy(id_ambito, t->nombre_local);
 			return OK;
 		}
@@ -713,16 +715,16 @@ int insertarTablaSimbolosAmbitos(tablaSimbolosAmbitos * tA, char* id_clase, elem
 		return ERROR;
 	}
 	if (tA->idAmbito == GLOBAL){
-    printf("\nSE METE EN INSERTAR NH DE LA GLOBAL\n")
 		if (insertarNodoHash(tA->global, id_clase, e) == ERROR){
 			return ERROR;
 		}
 	}
 	if (tA->idAmbito == LOCAL){
-		if (insertarNodoHash(tA->local, id_clase, e) == ERROR){
+    if (insertarNodoHash(tA->local, id_clase, e) == ERROR){
 			return ERROR;
 		}
 	}
+
 	return OK;
 }
 

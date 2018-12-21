@@ -1,9 +1,15 @@
+// Numero incorrecto de parametros en llamada a funcion en linea 20.
+
 main
 {
-  int y, x;
-  int a;
+    int x, y;
+    boolean a, b;
 
+    scanf x;
+    y =7;
 
-  y = 8;
-  printf y;
+    a = (x == y);
+
+    printf a; 
+
 }
