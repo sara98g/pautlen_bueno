@@ -145,11 +145,13 @@ escribir_variables: /*vacio*/
           TablaHash *th=NULL;
         	 NodoHash *n=NULL;
            elementoTablaSimbolos *e=NULL;
-          char* clave=NULL;
+          char clave[64];
           int i;
           th = tsa->global;
           for(i=0; i<th->nElem; i++){
-            clave = th->lista[i];
+            clave[0]='\0';
+            strcpy(clave, th->lista[i]);
+            printf("CLAVE %d ES %s\n", i, clave);
             n = buscarNodoHash(th, clave);
             if(n == NULL){
               printf("El nodo ha develto NULL\n");
@@ -249,7 +251,6 @@ funcion: fn_declaration sentencias'}'{
 
 fn_declaration: fn_complete_name '{' declaraciones_funcion {
         declararFuncion(salida, $1.lexema, num_var_local );
-        printf("Llegamos  a declarar el inicio de la fucnion!\n");
         //acceder a la funcion global -> rellenar el numero de variables locales
 
 };
@@ -277,12 +278,10 @@ fn_complete_name: fn_name '(' parametros_funcion ')'{
           }
 
           buscarIdNoCualificado(NULL, tsa, nombre ,"main", &e, idAmbito  );
-          e->numero_parametros;
+
           //nodo_free_ElementoTablaSimbolos(elemento);
           elemento = nodo_crearElementoTablaSimbolos();
-          printf("Numero de parametros :  %d\n" , num_params_actual);
           for(i = 0; i < num_params_actual; i++){
-            printf("El parametro[%d]: %s\n", i, array_param[i].nombre);
             if(buscarParaDeclararIdTablaSimbolosAmbitos(tsa, array_param[i].nombre, &e, idAmbito)==ERROR){
               if(array_param[i].tipo == BOOLEANO || array_param[i].tipo ==ENTERO){
                 elemento = nodo_set_ElementoTablaSimbolos(elemento,
@@ -321,7 +320,6 @@ fn_complete_name: fn_name '(' parametros_funcion ')'{
                   nodo_free_ElementoTablaSimbolos(elemento);
                   exit(-1);
                 }
-                printf("Parametro insertado: %s, %d\n", elemento->clave, elemento->categoria );
 
             }
             else{
@@ -339,8 +337,8 @@ fn_complete_name: fn_name '(' parametros_funcion ')'{
     strcpy($$.lexema, $1.lexema);
     $$.tipo=$1.tipo;
 
-    num_params_actual = 0;
-    pos_params_actual = 0;
+    // num_params_actual = 0;
+    // pos_params_actual = 0;
   }
 };
 
@@ -374,6 +372,7 @@ parametro_funcion: tipo idpf {
           strcpy(array_param[pos_params_actual].nombre, $2.lexema);
           array_param[pos_params_actual].tipo = tipo_actual;
           array_param[pos_params_actual].clase = clase_actual;
+          array_param[pos_params_actual].posicion = pos_params_actual;
           pos_params_actual++;
           num_params_actual++;
 
@@ -427,7 +426,6 @@ idpf: TOK_IDENTIFICADOR {
       exit(-1);
     }
 
-
 };
 
 declaraciones_funcion: declaraciones {fprintf(salida,";R:\tdeclaraciones_funcion: declaracion\n");}
@@ -472,10 +470,7 @@ asignacion: TOK_IDENTIFICADOR '=' exp {
                 }
 
                 if (e->tipo == $3.tipo){
-                  printf("EL ID AMBITO EN ASIGNACION: %s\n", idAmbito);
                   if(strcmp(idAmbito, "main") != 0){
-                      printf("Entramos en asignacion LOCAL\n");
-
                         if(e->categoria == PARAMETRO){
                           printf("COGEMOS EL PARAMETRO: %s\n", $3.lexema);
                           fprintf(salida, "\tlea  eax, [ebp+4+( 4 * (%d) )]\n", num_params_actual - e->posicion_parametro);
@@ -758,7 +753,6 @@ exp:    exp '+' exp {
           fprintf(salida,";R:\texp: TOK_IDENTIFICADOR\n");
           fprintf(salida, ";Identificaodr: %s\n", $1.lexema);
           if(buscarIdNoCualificado(NULL, tsa, $1.lexema, "main", &e, idAmbito) == OK){
-
                 if(strcmp(idAmbito,"main")==0){
                   if(en_exp_list == 1){
                     fprintf(salida, "\tpush dword [_%s]\n", $1.lexema);
@@ -770,16 +764,14 @@ exp:    exp '+' exp {
 
                 }
                 else{
-                  num_var_local++;
+
                   if(e->categoria == PARAMETRO){
                     fprintf(salida, ";exp2 es param: %s\n", e->clave);
-
                     fprintf(salida, "\tlea  eax, [ebp+4+( 4 * %d )]\n", num_params_actual+1 - e->posicion_parametro);
 
                     fprintf(salida, "\tpush dword eax\n");
 
                   } else if( e->categoria == VARIABLE){
-                    fprintf(salida, ";exp2 es var_local: %s\n", e->clave);
                     fprintf(salida, "\tlea  eax, [ebp - 4 * %d ]\n",e->posicion_variable_local);
 
                     fprintf(salida, "\tpush dword eax\n");
@@ -804,7 +796,7 @@ exp:    exp '+' exp {
                 fprintf(salida,";R:\texp: constante \n");
 
                 $$.tipo = $1.tipo;
-                $$.es_direccion = $1.es_direccion;
+                $$.es_direccion = 0;
                 $$.valor_entero = $1.valor_entero;
         }
         | '(' exp ')'  {
@@ -909,8 +901,13 @@ lista_expresiones: exp resto_lista_expresiones  {
 
 
 resto_lista_expresiones: ',' exp resto_lista_expresiones {
-          fprintf(salida,";R:\tlista_expresiones: ',' exp resto_lista_expresiones\n");
-          fprintf(salida, "\tpush dword %s\n", $2.lexema);
+          fprintf(salida,";R:\tresto_expresiones: ',' exp resto_lista_expresiones\n");
+          if($2.es_direccion == 1){
+              fprintf(salida, "\tpush dword _%s\n", $2.lexema);
+          }else{
+            fprintf(salida, "\tpush dword %s\n", $2.lexema);
+
+          }
           array_param[pos_params_actual].tipo = $2.tipo;
           strcpy(array_param[pos_params_actual].nombre, $2.lexema);
           num_params_actual++;
@@ -1048,7 +1045,6 @@ identificador: TOK_IDENTIFICADOR
         {
                 fprintf(salida, ";R:\tidentificador: TOK_IDENTIFICADOR");
                 $1.tipo=tipo_actual;
-                printf("\n\nIDENTIFICADOR: %s\n\n", $1.lexema);
                 if(clase_actual == VECTOR){
                   tamanio_actual=tamanio_vector_actual;
                 }
@@ -1065,8 +1061,8 @@ identificador: TOK_IDENTIFICADOR
                 													$1.tipo,
                 													0,
                 													0,
-                													0,
-                													0,
+                													num_params_actual,
+                													num_var_local,
                 													pos_var_local_actual,
                 													0,
                 													0,
@@ -1105,7 +1101,7 @@ identificador: TOK_IDENTIFICADOR
                   printf("ERROR SEMANTICO: %d:%d - Identificador %s duplicado\n",line, columna-yyleng, $1.lexema);
                   exit(-1);
                 }
-                if(tsa->idAmbito == LOCAL){
+                if(strcmp(idAmbito,"main")!=0 ){
                   num_var_local++;
                   pos_var_local_actual++;
                 }

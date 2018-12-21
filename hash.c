@@ -235,7 +235,7 @@ NodoHash* crearNodoHash(char *clave, elementoTablaSimbolos *info) {
             }
             strcpy(nh->clave, clave);
             nh->siguiente = NULL;
-
+						
         }
 
         else if ((nh = (NodoHash *) malloc(sizeof(NodoHash)))) {
@@ -278,12 +278,12 @@ int insertarNodoHash(TablaHash *th, char *clave, elementoTablaSimbolos *info) {
     }
 
     ind = funcionHash(clave) % th->tam;
-	//printf("\t\tInsertar en la posicion: %d\n", ind);
 	if (!(n = crearNodoHash(clave, info))) {
         return ERROR;
     }
 	  if(th->nElem > 0){
         if(th->tabla[ind] != NULL ){
+					printf("Tiene que crear lista enlzada\n");
     			n2 = th->tabla[ind];
     			while(n2->siguiente){
     				n2 = n2->siguiente;
@@ -291,16 +291,19 @@ int insertarNodoHash(TablaHash *th, char *clave, elementoTablaSimbolos *info) {
     			n2->siguiente = n;
         }
 				else{
+					printf("No tiene que crear l enlazada\n");
           th->tabla[ind] =nodoHash_copiar(n);
 	      }
     }
 		else{
+			printf("insertar primer elemento\n");
 			th->tabla[ind] =nodoHash_copiar(n);
     }
+		printf("POSICION DEL NUEVO ELEMENTO %d, %s\n", th->nElem, clave);
 
-    th->lista[th->nElem] = clave;
+    strcpy(th->lista[th->nElem], clave);
+		printf("LISTA DE %d es %s\n", th->nElem,th->lista[th->nElem]);
     th->nElem++;
-		printf("La clave del nodo insertado: %s\n",th->tabla[ind]->clave);
 
 		return OK;
 }

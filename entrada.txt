@@ -1,14 +1,9 @@
 main{
-  int y;
-  int p;
-  function int doble( int x , int z){
-    int w;
-    printf x;
-    w = x + z;
-    
-    return w;
-  }
-  scanf y;
-  printf doble(y, 3);
+  int y, z;
+  int b;
+
+  b = 8;
+
+  printf b;
 
 }

@@ -391,7 +391,7 @@ int buscarTablaSimbolosAmbitosConPrefijos (tablaSimbolosAmbitos *tA, char *id, e
 *
 **/
 int buscarIdNoCualificado(tablaSimbolosClases *t, tablaSimbolosAmbitos *tabla_main, char * nombre_id, char * nombre_clase_desde, elementoTablaSimbolos ** e, char * nombre_ambito_encontrado){
-  if (/*!t || */!tabla_main || !nombre_id || !nombre_clase_desde ){
+  if (tabla_main || !nombre_id || !nombre_clase_desde ){
   	return ERROR;
   }
   if (strcmp(nombre_clase_desde, "main") == 0){
@@ -400,6 +400,9 @@ int buscarIdNoCualificado(tablaSimbolosClases *t, tablaSimbolosAmbitos *tabla_ma
   	}
 	return OK;
   } else {
+    if(t == NULL){
+      return ERROR;
+    }
   	if(buscarIdEnJerarquiaDesdeClase(t, nombre_id, nombre_clase_desde, e, nombre_ambito_encontrado) == OK){
   		return OK;
   	}
@@ -522,7 +525,6 @@ int buscarTablaSimbolosAmbitoActual(tablaSimbolosAmbitos * t, char* id, elemento
 		return ERROR;
 	}
 	if(t->idAmbito == GLOBAL){
-    printf("\nESTAMOS EN EL AMBITO GLOBAL\n");
 		//sprintf(aux, "% s_%s", t->nombre_global, id);
                 /*strcpy(aux, t->nombre_global);
                 strcpy(aux, "_");
@@ -531,15 +533,12 @@ int buscarTablaSimbolosAmbitoActual(tablaSimbolosAmbitos * t, char* id, elemento
 		if(n){
 
 			*e = nodo_get_ElementoTablaSimbolos(n);
-      printf("NOMBRE GLOBAL: %s\n", t->nombre_global);
 			strcpy(id_ambito, t->nombre_global);
 			return OK;
 		}
 		return ERROR;
 	} else if (t->idAmbito == LOCAL){
-    printf("\nESTAMOS EN EL AMBITO LOCAL\n");
       //sprintf(aux, "%s_%s", t->nombre_local, id);
-      printf("NOMBRE DE LA TABLA: %s\n", aux);
 		n = buscarNodoHash(t->local, id);
 		if(!n){
                     sprintf(aux, "%s_%s", t->nombre_global, id);
@@ -557,7 +556,6 @@ int buscarTablaSimbolosAmbitoActual(tablaSimbolosAmbitos * t, char* id, elemento
 		} else {
 			*e = nodo_get_ElementoTablaSimbolos(n);
 
-      printf("NOMBRE LOCAL: %s\n", t->nombre_local);
 			strcpy(id_ambito, t->nombre_local);
 			return OK;
 		}
@@ -728,6 +726,7 @@ int insertarTablaSimbolosAmbitos(tablaSimbolosAmbitos * tA, char* id_clase, elem
 			return ERROR;
 		}
 	}
+
 	return OK;
 }
 
