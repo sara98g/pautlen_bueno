@@ -154,10 +154,12 @@ escribir_variables: /*vacio*/
             n = buscarNodoHash(th, clave);
             if(n == NULL){
               printf("El nodo ha develto NULL\n");
+              exit(-1);
             }
             e = nodo_get_ElementoTablaSimbolos(n);
             if(e == NULL){
-              printf("El ELEMNTO ha develto NULL\n");
+              printf("El elemento ha develto NULL\n");
+              exit(-1);
             }
             declarar_variable(salida, e->clave,  1,  e->tamanio);
           }
@@ -216,7 +218,7 @@ clase_vector: TOK_ARRAY tipo '['TOK_CONSTANTE_ENTERA']' {
               tamanio_vector_actual = $4.valor_entero;
               clase_actual = VECTOR;
               if ((tamanio_vector_actual <1) || (tamanio_vector_actual > 64)){
-                printf("ERROR SEMANTICO: %d:%d - Tamaño vector demasiado grande\n",line, columna-yyleng);
+                printf("****ERROR SEMANTICO: %d:%d - El tamaño del vector excede los limites permitidos(1,64)\n",line, columna-yyleng);
                 exit(-1);
               }
 
@@ -237,7 +239,7 @@ funciones: funcion funciones {fprintf(salida,";R:\tfunciones: funcion funciones\
 funcion: fn_declaration sentencias'}'{
         fprintf(salida,";R:\tfuncion: TOK_FUNCTION modificadores_acceso tipo_retorno TOK_IDENTIFICADOR '(' parametro_funcion ')' declaraciones_funcion sentencia\n");
         if(fn_return < 1){
-          printf("ERROR SEMANTICO: %d:%d - devuelve fn_return < 1: %d\n",line, columna-yyleng, fn_return);
+          printf("****ERROR SEMANTICO: %d:%d - Funcion sin sentencia de retorno\n",line, columna-yyleng);
           fn_return = 0;
           //exit(-1);
 
@@ -284,8 +286,10 @@ fn_complete_name: fn_name '(' parametros_funcion ')'{
 
           //nodo_free_ElementoTablaSimbolos(elemento);
           elemento = nodo_crearElementoTablaSimbolos();
+          printf("EL idambito en los parametros: %d\n", tsa->idAmbito);
           for(i = 0; i < num_params_actual; i++){
             if(buscarParaDeclararIdTablaSimbolosAmbitos(tsa, array_param[i].nombre, &e, idAmbito)==ERROR){
+
               if(array_param[i].tipo == BOOLEANO || array_param[i].tipo ==ENTERO){
                 elemento = nodo_set_ElementoTablaSimbolos(elemento,
                                           array_param[i].nombre,
@@ -294,7 +298,7 @@ fn_complete_name: fn_name '(' parametros_funcion ')'{
                                           array_param[i].tipo,
                                           0,
                                           0,
-                                          0,
+                                          num_params_actual,
                                           0,
                                           0,
                                           array_param[i].posicion,
@@ -318,20 +322,19 @@ fn_complete_name: fn_name '(' parametros_funcion ')'{
                                           NULL);
 
                 if(insertarTablaSimbolosAmbitos(tsa, array_param[i].nombre,  elemento) == ERROR){
-                  printf("error al insertar\n");
-                  printf("ERROR SEMANTICO: %d:%d - parametro %s duplicado\n",line, columna-yyleng, array_param[i].nombre);
+                  printf("****ERROR SEMANTICO: %d:%d - Declaracion de parametro %s duplicada\n",line, columna-yyleng, array_param[i].nombre);
                   nodo_free_ElementoTablaSimbolos(elemento);
                   exit(-1);
                 }
 
             }
             else{
-              printf("parametro ya declarado %s\n",array_param[i].nombre);
+              printf("PArametro no es int ni boolean\n");
               exit(-1);
             }
         }
         else{
-          printf("ERROR SEMANTICO: %d:%d - funcion %s duplicado\n",line, columna-yyleng, $1.lexema);
+          printf("****ERROR SEMANTICO: %d:%d - Declaracion de parametro %s duplicado\n",line, columna-yyleng, array_param[i].nombre);
           exit(-1);
         }
 
@@ -340,8 +343,10 @@ fn_complete_name: fn_name '(' parametros_funcion ')'{
     strcpy($$.lexema, $1.lexema);
     $$.tipo=$1.tipo;
 
-    // num_params_actual = 0;
-    // pos_params_actual = 0;
+  }
+  else{
+    printf("****ERROR SEMANTICO: %d:%d - Declaracion de funcion %s duplicada\n",line, columna-yyleng, array_param[i].nombre);
+    exit(-1);
   }
 };
 
@@ -386,48 +391,48 @@ parametro_funcion: tipo idpf {
 idpf: TOK_IDENTIFICADOR {
     strcpy($$.lexema, $1.lexema);
 
-    if(buscarParaDeclararIdTablaSimbolosAmbitos(tsa, $1.lexema, &e, idAmbito)==ERROR){
-        elementoTablaSimbolos *elemento = nodo_crearElementoTablaSimbolos();
-        elemento = nodo_set_ElementoTablaSimbolos(elemento,
-                                  $1.lexema,
-                                  clase_actual,
-                                  PARAMETRO,
-                                  $1.tipo,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  pos_params_actual,
-                                  0,
-                                  1,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  NULL);
-        if(insertarTablaSimbolosAmbitos(tsa, $1.lexema,  elemento) == ERROR){
-          printf("ERROR SEMANTICO: %d:%d - Identificador %s duplicado\n",line, columna-yyleng, $1.lexema);
-          nodo_free_ElementoTablaSimbolos(elemento);
-          exit(-1);
-        }
+    // if(buscarParaDeclararIdTablaSimbolosAmbitos(tsa, $1.lexema, &e, idAmbito)==ERROR){
+    //     elementoTablaSimbolos *elemento = nodo_crearElementoTablaSimbolos();
+    //     elemento = nodo_set_ElementoTablaSimbolos(elemento,
+    //                               $1.lexema,
+    //                               clase_actual,
+    //                               PARAMETRO,
+    //                               $1.tipo,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               pos_params_actual,
+    //                               0,
+    //                               1,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               0,
+    //                               NULL);
+    //     if(insertarTablaSimbolosAmbitos(tsa, $1.lexema,  elemento) == ERROR){
+    //       printf("****ERROR SEMANTICO: %d:%d - Declaracion de variable %s duplicado\n",line, columna-yyleng, $1.lexema);
+    //       nodo_free_ElementoTablaSimbolos(elemento);
+    //       exit(-1);
+    //     }
 
-    }
-    else{
-      printf("ERROR SEMANTICO: %d:%d - Identificador %s duplicado\n",line, columna-yyleng, $1.lexema);
-      exit(-1);
-    }
+    // }
+    // else{
+    //   printf("****ERROR SEMANTICO: %d:%d - Declaracion de variable %s duplicado\n",line, columna-yyleng, $1.lexema);
+    //   exit(-1);
+    // }
 
 };
 
@@ -468,14 +473,13 @@ asignacion: TOK_IDENTIFICADOR '=' exp {
                 idAmbito[0] = '\0';
                 /*Revisar*/
                 if(buscarIdNoCualificado(NULL, tsa, $1.lexema, "main", &e, idAmbito) == ERROR){
-                  printf("ERROR SEMANTICO: %d:%d No existe identificador %s\n", line, columna - yyleng, $1.lexema);
+                  printf("***ERROR SEMANTICO: %d:%d Acceso a variable %s no declarada\n", line, columna - yyleng, $1.lexema);
                   exit(-1);
                 }
 
                 if (e->tipo == $3.tipo){
                   if(strcmp(idAmbito, "main") != 0){
                         if(e->categoria == PARAMETRO){
-                          printf("COGEMOS EL PARAMETRO: %s\n", $3.lexema);
                           fprintf(salida, "\tlea  eax, [ebp+4+( 4 * (%d) )]\n", num_params_actual - e->posicion_parametro);
                           fprintf(salida, "\tpush dword eax\n");
 
@@ -499,7 +503,7 @@ asignacion: TOK_IDENTIFICADOR '=' exp {
 
 
                 }else{
-                  printf("ERROR SEMANTICO: %d:%d No se puede asignar dos objetos de diferentes tipos\n", line, columna - yyleng);
+                  printf("****ERROR SEMANTICO: %d:%d Asignacion incompatible\n", line, columna - yyleng);
                   exit(-1);
                 }
 
@@ -509,7 +513,7 @@ asignacion: TOK_IDENTIFICADOR '=' exp {
               e = NULL;
               idAmbito[0] = '\0';
               if(buscarIdNoCualificado(NULL, tsa, $1.lexema, "main", &e, idAmbito) == ERROR){
-                printf("ERROR SEMANTICO: %d:%d No existe vector %s\n", line, columna - yyleng, $1.lexema);
+                printf("***ERROR SEMANTICO: %d:%d Acceso a vector %s no declarado\n", line, columna - yyleng, $1.lexema);
                 exit(-1);
               }
               fprintf(salida, "\tpop dword eax\n");
@@ -539,17 +543,17 @@ elemento_vector: TOK_IDENTIFICADOR '[' exp ']' {
                       strcpy($$.lexema,$1.lexema);
                     }
                     else{
-                      printf("Error, el indice del vector no es un entero\n");
+                      printf("****ERROR SEMANTICO: %d:%d El indice en una operacion de indexacion tiene que ser de tipo entero\n", line, columna - yyleng);
                       exit(-1);
                     }
                   }
                   else{
-                    printf("Error, este id no es un vector\n");
+                    printf("****ERROR SEMANTICO: %d:%d Intento de indexacion de una variable que no es de tipo vector\n", line, columna - yyleng);
                     exit(-1);
                   }
                 }
                 else{
-                  printf("Error vector no declarado\n");
+                  printf("****ERROR SEMANTICO: %d:%d Acceso a vector %s no declarado\n", line, columna - yyleng, $1.lexema);
                   exit(-1);
                 }
               }
@@ -570,7 +574,7 @@ condicional: if_exp sentencias '}' {
 if_exp : TOK_IF '(' exp ')' '{' {
     fprintf(salida,";R:\tif_exp: TOK_IF '(' exp \n");
     if($3.tipo != BOOLEANO){
-      printf("ERROR SEMANTICO: %d:%d No se puede hacer if en distinto de boolean\n", line, columna - yyleng);
+      printf("****ERROR SEMANTICO: %d:%d Condicional con condicion de tipo int\n", line, columna - yyleng);
     }
     $$.etiqueta = etiqueta_global++;
     $$.es_direccion=$3.es_direccion;
@@ -594,7 +598,7 @@ bucle: while_exp sentencias '}'{
 
 while_exp: while exp ')' '{'{
       if($2.tipo != BOOLEANO){
-        fprintf(stdout, "ERROR, WHILE distinto de BOOLEANOo\n" );
+        printf("****ERROR SEMANTICO: %d:%d Bucle con condicion de tipo int\n", line, columna - yyleng);
       }
 
       $$.es_direccion = $2.es_direccion;
@@ -610,11 +614,11 @@ while: TOK_WHILE '('{
 lectura: TOK_SCANF TOK_IDENTIFICADOR {
             fprintf(salida,";R:\tlectura: TOK_SCANF TOK_IDENTIFICADOR  \n");
             if(buscarIdNoCualificado(NULL, tsa, $2.lexema, "main", &e, idAmbito) == ERROR){
-              printf("ERROR SEMANTICO: %d:%d - no se puede leer el identificador %s (no existe)\n", line, columna-yyleng, $2.lexema);
+              printf("****ERROR SEMANTICO: %d:%d - Acceso a variable %s no declarada\n", line, columna - yyleng, $2.lexema);
               exit(-1);
             }
             if(e->clase == VECTOR || e->categoria == FUNCION){
-              printf("ERROR SEMANTICO: %d:%d - no se pueden leer funciones ni vectores\n", line, columna-yyleng);
+              printf("***ERROR SEMANTICO: %d:%d - No se pueden leer funciones ni vectores (de esta manera)\n", line, columna-yyleng);
               exit(-1);
             }
 
@@ -629,7 +633,7 @@ lectura: TOK_SCANF TOK_IDENTIFICADOR {
         | TOK_SCANF elemento_vector {
               fprintf(salida,";R:\tlectura: TOK_SCANF elemento_vector \n");
               if(buscarIdNoCualificado(NULL, tsa, $2.lexema, "main", &e, idAmbito) == ERROR){
-                printf("ERROR SEMANTICO: %d:%d - no se puede leer el identificador %s (no existe)\n", line, columna-yyleng, $2.lexema);
+                printf("****ERROR SEMANTICO: %d:%d - Acceso a vector %s no declarado\n", line, columna - yyleng, $2.lexema);
                 exit(-1);
               }
 
@@ -659,7 +663,7 @@ exp:    exp '+' exp {
 
               fprintf(salida,";R:\texp: exp '+' exp \n");
               if($1.tipo !=ENTERO|| $3.tipo!=ENTERO){
-                fprintf(stdout, "ERROR, no se pueden sumar cosas diferentes a enteros\n" );
+                printf("****ERROR SEMANTICO: %d:%d - Operacion aritmetica con operandos boolean\n", line, columna - yyleng);
                 exit(-1);
               }
 
@@ -670,7 +674,7 @@ exp:    exp '+' exp {
         | exp '-' exp {
               fprintf(salida,";R:\texp: exp '-' exp \n");
               if($1.tipo !=ENTERO|| $3.tipo!=ENTERO){
-                fprintf(stdout, "ERROR, no se pueden restar cosas diferentes aENTEROs\n" );
+                printf("****ERROR SEMANTICO: %d:%d - Operacion aritmetica con operandos boolean\n", line, columna - yyleng);
                 exit(-1);
               }
 
@@ -682,7 +686,7 @@ exp:    exp '+' exp {
         | exp '/' exp {
               fprintf(salida,";R:\texp: exp '/' exp \n");
               if($1.tipo !=ENTERO|| $3.tipo!=ENTERO){
-                fprintf(stdout, "ERROR, no se pueden dividir cosas diferentes a enteros\n" );
+                printf("****ERROR SEMANTICO: %d:%d - Operacion aritmetica con operandos boolean\n", line, columna - yyleng);
                 exit(-1);
               }
               dividir(salida,$1.es_direccion,$3.es_direccion);
@@ -692,7 +696,7 @@ exp:    exp '+' exp {
         | exp '*' exp  {
               fprintf(salida,";R:\texp: exp '*' exp \n");
               if($1.tipo !=ENTERO|| $3.tipo!=ENTERO){
-                fprintf(stdout, "ERROR, no se pueden multiplicar cosas diferentes a enteros\n" );
+                printf("****ERROR SEMANTICO: %d:%d - Operacion aritmetica con operandos boolean\n", line, columna - yyleng);
                 exit(-1);
               }
 
@@ -704,7 +708,7 @@ exp:    exp '+' exp {
         | '-' exp %prec NEG  {
               fprintf(salida,";R:\texp: '-' exp \n");
               if($2.tipo !=ENTERO){
-                fprintf(stdout, "ERROR, no se pueden cambiar_signo cosas diferentes a enteros\n" );
+                printf("****ERROR SEMANTICO: %d:%d - Operacion aritmetica con operandos boolean\n", line, columna - yyleng);
                 exit(-1);
               }
               cambiar_signo(salida, $2.es_direccion);
@@ -716,7 +720,7 @@ exp:    exp '+' exp {
         | exp TOK_AND exp  {
               fprintf(salida,";R:\texp: exp TOK_AND exp  \n");
               if($1.tipo != BOOLEANO || $3.tipo!= BOOLEANO ){
-                fprintf(stdout, "ERROR, no se puede hacer AND entre cosas diferentes a booleanos\n" );
+                printf("****ERROR SEMANTICO: %d:%d - Operacion logica con operandos int\n", line, columna - yyleng);
                 exit(-1);
               }
 
@@ -729,7 +733,7 @@ exp:    exp '+' exp {
               fprintf(salida,";R:\texp: exp TOK_OR exp \n");
 
               if($1.tipo != BOOLEANO || $3.tipo!= BOOLEANO ){
-                fprintf(stdout, "ERROR, no se puede hacer OR entre cosas diferentes a booleanos\n" );
+                printf("****ERROR SEMANTICO: %d:%d - Operacion logica con operandos int\n", line, columna - yyleng);
                 exit(-1);
               }
 
@@ -743,7 +747,7 @@ exp:    exp '+' exp {
               fprintf(salida,";R:\texp:'!' exp\n");
 
               if($2.tipo != BOOLEANO){
-                fprintf(stdout, "ERROR, no se puede hacer NO en cosas diferentes a booleanos\n" );
+                printf("****ERROR SEMANTICO: %d:%d - Operacion logica con operandos int\n", line, columna - yyleng);
                 exit(-1);
               }
               $$.es_direccion=0;
@@ -770,7 +774,8 @@ exp:    exp '+' exp {
 
                   if(e->categoria == PARAMETRO){
                     fprintf(salida, ";exp2 es param: %s\n", e->clave);
-                    fprintf(salida, "\tlea  eax, [ebp+4+( 4 * %d )]\n", num_params_actual +1 - e->posicion_parametro);
+                    printf("Lexema:%s, Numero de parametros: %d, Posicion_parametro: %d\n", $1.lexema, e->numero_parametros, e->posicion_parametro);
+                    fprintf(salida, "\tlea  eax, [ebp+4+( 4 * %d )]\n", e->numero_parametros - e->posicion_parametro);
 
                     fprintf(salida, "\tpush dword eax\n");
 
@@ -787,11 +792,11 @@ exp:    exp '+' exp {
               $$.tipo = e->tipo;
               $$.es_direccion = 1;
               strcpy($$.lexema, $1.lexema);
-              //nodo_free_ElementoTablaSimbolos(e);
 
           }
           else{
-              printf("ERROR SEMANTICO: %d:%d - Identificador %s no declarado\n", line, columna-yyleng, $1.lexema);
+            printf("SE METE AQUI\n");
+            printf("****ERROR SEMANTICO: %d:%d - Acceso a variable %s no declarada\n", line, columna - yyleng, $1.lexema);
               exit(-1);
           }
         }
@@ -829,26 +834,18 @@ exp:    exp '+' exp {
 
             if(buscarParaDeclararIdTablaSimbolosAmbitos(tsa, nombre, &e, idAmbito)==ERROR)
             {
-              printf("La funcion a la que quieres acceder no esta declarada: %s\n", nombre);
+              printf("****ERROR SEMANTICO: %d:%d - Acceso a funcion %s no declarada\n", line, columna - yyleng, nombre);
               exit(-1);
             }
 
             if(e->categoria != FUNCION){
               printf("Llamando a la funcion la busqueda a devuelto un elemento que no es una funcion: %s\n", $1.lexema );
+              exit(-1);
             }
             fprintf(salida,";R:\texp: idpf '(' lista_expresiones ')' \n");
-            // for( i = 0 ; i< num_params_actual ; i++){
-            //   printf("ESTE ES EL NOMBRE DEL PARAMETRO: %s\n",array_param[i].nombre);
-            //   if(array_param[i].es_variable == 1){
-            //     fprintf(salida, "\tmov eax,[_%s]\n", array_param[i].nombre);
-            //   }else{
-            //     fprintf(salida, "\tmov eax, _%s\n", array_param[i].nombre);
-            //   }
-            //   fprintf(salida, "\tpush dword eax\n");
-            // }
-            fprintf(salida, "\tcall _%s\n", $1.lexema);
-            fprintf(salida, "\tadd esp, 4 * %d\n", num_params_actual);
-            fprintf(salida, "\tpush dword eax\n");
+
+            llamarFuncion(salida, $1.lexema, num_params_actual);
+
 
 
             en_exp_list = 0;
@@ -863,14 +860,7 @@ exp:    exp '+' exp {
 
 idf_llamada: TOK_IDENTIFICADOR{
 
-         // if(buscarIdNoCualificado(NULL,tsa, $1.lexema,"main", &e, idAmbito)==ERROR){
-         //   printf("Esa funcion no existe %s\n", $1.lexema);
-         //   exit(-1);
-         // }
-         //
-         // if(e->categoria != FUNCION){
-         //   printf("Existe pero no es funcion %s\n", $1.lexema);
-         // }
+
          if(en_exp_list == 1){
            printf("ERROR idf_llamada\n");
            exit(-1);
@@ -878,7 +868,7 @@ idf_llamada: TOK_IDENTIFICADOR{
          strcpy($$.lexema ,$1.lexema);
          num_params_actual = 0;
          en_exp_list = 1;
-         $$.tipo = e->tipo;
+         $$.tipo = $1.tipo;
          $$.es_direccion=0;
 
 }
@@ -906,12 +896,12 @@ lista_expresiones: exp resto_lista_expresiones  {
 
 resto_lista_expresiones: ',' exp resto_lista_expresiones {
           fprintf(salida,";R:\tresto_expresiones: ',' exp resto_lista_expresiones\n");
-          if($2.es_direccion == 1){
-              fprintf(salida, "\tpush dword _%s\n", $2.lexema);
-          }else{
-            fprintf(salida, "\tpush dword %s\n", $2.lexema);
-
-          }
+          // if($2.es_direccion == 1){
+          //     fprintf(salida, "\tpush dword _%s\n", $2.lexema);
+          // }else{
+          //   fprintf(salida, "\tpush dword %s\n", $2.lexema);
+          //
+          // }
           array_param[pos_params_actual].tipo = $2.tipo;
           strcpy(array_param[pos_params_actual].nombre, $2.lexema);
           num_params_actual++;
@@ -930,7 +920,7 @@ comparacion: exp TOK_IGUAL exp {
                 $$.es_direccion = 0;
               }
               else{
-                printf("ERROR SEMANTICO: %d:%d - No se puede hacer la comparacion == entre objetos de diferentes tipos\n",line, columna-yyleng);
+                printf("****ERROR SEMANTICO: %d:%d - Comparacion con operandos boolean\n",line, columna-yyleng);
                 exit(-1);
               }
         }
@@ -944,7 +934,7 @@ comparacion: exp TOK_IGUAL exp {
               }
 
               else{
-                printf("ERROR SEMANTICO: %d:%d - No se puede hacer la comparacion != entre objetos de diferentes tipos\n",line, columna-yyleng);
+                printf("****ERROR SEMANTICO: %d:%d - Comparacion con operandos boolean\n",line, columna-yyleng);
                 exit(-1);
               }
             }
@@ -958,7 +948,7 @@ comparacion: exp TOK_IGUAL exp {
                 $$.es_direccion = 0;
               }
               else{
-                printf("ERROR SEMANTICO: %d:%d - No se puede hacer la comparacion <= entre objetos no enteros\n",line, columna-yyleng);
+                printf("****ERROR SEMANTICO: %d:%d - Comparacion con operandos boolean\n",line, columna-yyleng);
                 exit(-1);
               }
             }
@@ -972,7 +962,7 @@ comparacion: exp TOK_IGUAL exp {
                 $$.es_direccion = 0;
               }
               else{
-                printf("ERROR SEMANTICO: %d:%d - No se puede hacer la comparacion >= entre objetos no enteros\n",line, columna-yyleng);
+                printf("****ERROR SEMANTICO: %d:%d - Comparacion con operandos boolean\n",line, columna-yyleng);
                 exit(-1);
               }
             }
@@ -986,7 +976,7 @@ comparacion: exp TOK_IGUAL exp {
                 $$.es_direccion = 0;
               }
               else{
-                printf("ERROR SEMANTICO: %d:%d - No se puede hacer la comparacion < entre objetos no enteros\n",line, columna-yyleng);
+                printf("****ERROR SEMANTICO: %d:%d - Comparacion con operandos boolean\n",line, columna-yyleng);
                 exit(-1);
               }
             }
@@ -1000,7 +990,7 @@ comparacion: exp TOK_IGUAL exp {
                 $$.es_direccion = 0;
               }
               else{
-                printf("ERROR SEMANTICO: %d:%d - No se puede hacer la comparacion > entre objetos no enteros\n",line, columna-yyleng);
+                printf("****ERROR SEMANTICO: %d:%d - Comparacion con operandos boolean\n",line, columna-yyleng);
                 exit(-1);
               }
             }
@@ -1092,7 +1082,7 @@ identificador: TOK_IDENTIFICADOR
                   if($1.tipo == BOOLEANO || $1.tipo ==ENTERO){
                     if(insertarTablaSimbolosAmbitos(tsa, $1.lexema,  elemento) == ERROR){
                       nodo_free_ElementoTablaSimbolos(elemento);
-                      printf("ERROR SEMANTICO: %d:%d - Identificador %s duplicado\n",line, columna-yyleng, $1.lexema);
+                      printf("****ERROR SEMANTICO: %d:%d - Declaracion de variable %s duplicado\n",line, columna-yyleng, $1.lexema);
                       exit(-1);
                     }
 
@@ -1102,7 +1092,7 @@ identificador: TOK_IDENTIFICADOR
                 else{
                   nodo_free_ElementoTablaSimbolos(elemento);
                   nodo_free_ElementoTablaSimbolos(e);
-                  printf("ERROR SEMANTICO: %d:%d - Identificador %s duplicado\n",line, columna-yyleng, $1.lexema);
+                  printf("****ERROR SEMANTICO: %d:%d - Declaracion de variable %s duplicado\n",line, columna-yyleng, $1.lexema);
                   exit(-1);
                 }
                 if(strcmp(idAmbito,"main")!=0 ){

@@ -523,6 +523,7 @@ int buscarTablaSimbolosAmbitoActual(tablaSimbolosAmbitos * t, char* id, elemento
 		return ERROR;
 	}
 	if(t->idAmbito == GLOBAL){
+    printf("ESTAMOS EN AMBITO GLOBAL\n");
 		//sprintf(aux, "% s_%s", t->nombre_global, id);
                 /*strcpy(aux, t->nombre_global);
                 strcpy(aux, "_");
@@ -536,16 +537,22 @@ int buscarTablaSimbolosAmbitoActual(tablaSimbolosAmbitos * t, char* id, elemento
 		}
 		return ERROR;
 	} else if (t->idAmbito == LOCAL){
+    printf("ESTAMOS EN AMBITO LOCAL\n");
+
       //sprintf(aux, "%s_%s", t->nombre_local, id);
 		n = buscarNodoHash(t->local, id);
 		if(!n){
-                    sprintf(aux, "%s_%s", t->nombre_global, id);
+      printf("NO LO ENCUENTRA EN LA LOCAL\n");
+
+                    //sprintf(aux, "%s_%s", t->nombre_global, id);
 			/*strcpy(aux, t->nombre_global);
 			strcpy(aux, "_");
 			strcpy(aux, id);*/
-			n = buscarNodoHash(t->global, aux);
+			n = buscarNodoHash(t->global, id);
 
-			if(n){
+
+			if(n != NULL){
+        printf("Ha encontrado el nodo: %s\n", n->clave);
 				*e = nodo_get_ElementoTablaSimbolos(n);
 				strcpy(id_ambito, t->nombre_global);
 				return OK;
@@ -720,7 +727,6 @@ int insertarTablaSimbolosAmbitos(tablaSimbolosAmbitos * tA, char* id_clase, elem
 		}
 	}
 	if (tA->idAmbito == LOCAL){
-    printf("Entamos en local con :5 %s\n", id_clase);
     if (insertarNodoHash(tA->local, id_clase, e) == ERROR){
 			return ERROR;
 		}

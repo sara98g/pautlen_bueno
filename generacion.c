@@ -575,7 +575,7 @@ void llamarFuncion(FILE* fd_asm, char* nombre_funcion, int num_argumentos){
 	    return;
 
     fprintf(fd_asm, "\n; ---Funcion llamarFuncion---\n");
-	fprintf(fd_asm, "\tcall %s\n", nombre_funcion);
+	fprintf(fd_asm, "\tcall _%s\n", nombre_funcion);
 	fprintf(fd_asm, "\tadd esp, 4 * %d\n", num_argumentos);
 	fprintf(fd_asm, "\tpush dword eax\n");
 
