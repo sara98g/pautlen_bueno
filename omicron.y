@@ -129,6 +129,7 @@ escribir_variables: /*vacio*/
           int i;
           th = tsa->global;
           for(i=0; i<th->nElem; i++){
+
             clave = th->lista[i];
             n = buscarNodoHash(th, clave);
             if(n == NULL){
@@ -536,7 +537,6 @@ exp:    exp '+' exp {
               $$.tipo = e->tipo;
               $$.es_direccion = 1;
               strcpy($$.lexema, $1.lexema);
-              nodo_free_ElementoTablaSimbolos(e);
 
           }
           else{
@@ -553,6 +553,7 @@ exp:    exp '+' exp {
         | '(' exp ')'  {
           fprintf(salida,";R:\texp:'(' exp ')' \n");
           $$.es_direccion=$2.es_direccion;
+          $$.tipo=$2.tipo;
         }
         | '(' comparacion ')'  {
             fprintf(salida,";R:\texp:'(' comparacion ')' \n");

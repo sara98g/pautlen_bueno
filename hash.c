@@ -266,11 +266,13 @@ void destruirNodoHash(NodoHash *nh){
 }
 
 int insertarNodoHash(TablaHash *th, char *clave, elementoTablaSimbolos *info) {
-	int ind;
+	int ind, i;
     NodoHash *n = NULL;
     NodoHash *n2 = NULL;
 
     if (th->nElem > 0) {
+			printf("\nVAMOS A VER QUE ELEMENTOS HAY EN LA TABLA:\n");
+			
         if(buscarNodoHash(th, clave)){
     	printf("\tEl nodo con clave = %s ya existe... ", clave);
             return ERROR;
