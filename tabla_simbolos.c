@@ -391,7 +391,7 @@ int buscarTablaSimbolosAmbitosConPrefijos (tablaSimbolosAmbitos *tA, char *id, e
 *
 **/
 int buscarIdNoCualificado(tablaSimbolosClases *t, tablaSimbolosAmbitos *tabla_main, char * nombre_id, char * nombre_clase_desde, elementoTablaSimbolos ** e, char * nombre_ambito_encontrado){
-  if (tabla_main || !nombre_id || !nombre_clase_desde ){
+  if (/*!t || */!tabla_main || !nombre_id || !nombre_clase_desde ){
   	return ERROR;
   }
   if (strcmp(nombre_clase_desde, "main") == 0){
@@ -400,7 +400,7 @@ int buscarIdNoCualificado(tablaSimbolosClases *t, tablaSimbolosAmbitos *tabla_ma
   	}
 	return OK;
   } else {
-    
+
   	if(buscarIdEnJerarquiaDesdeClase(t, nombre_id, nombre_clase_desde, e, nombre_ambito_encontrado) == OK){
   		return OK;
   	}
@@ -720,6 +720,7 @@ int insertarTablaSimbolosAmbitos(tablaSimbolosAmbitos * tA, char* id_clase, elem
 		}
 	}
 	if (tA->idAmbito == LOCAL){
+    printf("Entamos en local con :5 %s\n", id_clase);
     if (insertarNodoHash(tA->local, id_clase, e) == ERROR){
 			return ERROR;
 		}

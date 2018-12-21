@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Numero incorrecto de parametros en llamada a funcion en linea 20.
 
 main
@@ -11,5 +12,31 @@ main
     a = (x == y);
 
     printf a; 
+=======
+main{
+  int y;
+  int p;
+  int t;
+  int q;
+  function int suma( int x , int z){
+    int w;
+    w = x + z;
+
+
+    return w;
+  }
+
+  function int resta( int c , int a){
+    int w;
+    w = c - a;
+    return w;
+  }
+  scanf y;
+  scanf p;
+  t= suma(y, p);
+  q = resta(y , p );
+  printf t;
+  printf q;
+>>>>>>> 854ed556f7db6387451c1e8e1d31b4c446dfc2e2
 
 }
