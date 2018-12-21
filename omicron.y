@@ -278,15 +278,8 @@ fn_complete_name: fn_name '(' parametros_funcion ')'{
             exit(-1);
           }
 
-          // if(buscarIdNoCualificado(NULL, tsa, nombre ,"main", &e, idAmbito  ) == ERROR){
-          //   printf("No encuentra la funcion que acabamos de insertar\n");
-          //
-          // }
-          // e->numero_parametros = num_params_actual;
-
-          //nodo_free_ElementoTablaSimbolos(elemento);
+        
           elemento = nodo_crearElementoTablaSimbolos();
-          printf("EL idambito en los parametros: %d\n", tsa->idAmbito);
           for(i = 0; i < num_params_actual; i++){
             if(buscarParaDeclararIdTablaSimbolosAmbitos(tsa, array_param[i].nombre, &e, idAmbito)==ERROR){
 
@@ -774,7 +767,6 @@ exp:    exp '+' exp {
 
                   if(e->categoria == PARAMETRO){
                     fprintf(salida, ";exp2 es param: %s\n", e->clave);
-                    printf("Lexema:%s, Numero de parametros: %d, Posicion_parametro: %d\n", $1.lexema, e->numero_parametros, e->posicion_parametro);
                     fprintf(salida, "\tlea  eax, [ebp+4+( 4 * %d )]\n", e->numero_parametros - e->posicion_parametro);
 
                     fprintf(salida, "\tpush dword eax\n");
