@@ -277,7 +277,11 @@ fn_complete_name: fn_name '(' parametros_funcion ')'{
             exit(-1);
           }
 
-          buscarIdNoCualificado(NULL, tsa, nombre ,"main", &e, idAmbito  );
+          // if(buscarIdNoCualificado(NULL, tsa, nombre ,"main", &e, idAmbito  ) == ERROR){
+          //   printf("No encuentra la funcion que acabamos de insertar\n");
+          //
+          // }
+          // e->numero_parametros = num_params_actual;
 
           //nodo_free_ElementoTablaSimbolos(elemento);
           elemento = nodo_crearElementoTablaSimbolos();
@@ -767,7 +771,7 @@ exp:    exp '+' exp {
 
                   if(e->categoria == PARAMETRO){
                     fprintf(salida, ";exp2 es param: %s\n", e->clave);
-                    fprintf(salida, "\tlea  eax, [ebp+4+( 4 * %d )]\n", num_params_actual+1 - e->posicion_parametro);
+                    fprintf(salida, "\tlea  eax, [ebp+4+( 4 * %d )]\n", num_params_actual +1 - e->posicion_parametro);
 
                     fprintf(salida, "\tpush dword eax\n");
 

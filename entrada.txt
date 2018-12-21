@@ -1,9 +1,26 @@
 main{
-  int y, z;
-  int b;
+  int y;
+  int p;
+  int t;
+  int q;
+  function int suma( int x , int z){
+    int w;
+    w = x + z;
 
-  b = 8;
 
-  printf b;
+    return w;
+  }
+
+  function int resta( int c , int a){
+    int w;
+    w = c - a;
+    return w;
+  }
+  scanf y;
+  scanf p;
+  t= suma(y, p);
+  q = resta(y , p );
+  printf t;
+  printf q;
 
 }
